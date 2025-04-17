@@ -1,0 +1,64 @@
+﻿@page "/book-ticket/{EventId:int}"
+@using DemoApplication.Server.Models
+@using DemoApplication.Services.AuthServices
+@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+
+<PageTitle>Book Ticket</PageTitle>
+
+<MudPaper Class="pa-4" Elevation="4">
+    <MudText Typo="Typo.h5">Book Ticket for @Event?.Title</MudText>
+
+    @if (Event == null)
+    {
+        <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+    }
+    else
+    {
+        <EditForm Model="@TicketModel" OnValidSubmit="HandleBooking">
+            <MudGrid>
+                <MudItem xs="12" sm="4">
+                    <MudTextField Placeholder="Your Name" @bind-Value="TicketModel.Name" Required="true" FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField Placeholder="Email" @bind-Value="TicketModel.Email" Required="true" FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudNumericField T="int" Placeholder="Number of Tickets" @bind-Value="TicketModel.Quantity" Min="1" Max="10" Required="true" FullWidth="true" />
+                </MudItem>
+            </MudGrid>
+            <br /><br />
+         
+            <MudButton Type="Submit" Color="Color.Primary" Variant="Variant.Filled">Book Now</MudButton>
+        </EditForm>
+
+
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public int EventId { get; set; }
+    private EventModel? Event;
+    private TicketBookingModel TicketModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Event = await AuthService.GetEventById(EventId); // You must implement this method in IAuthService
+    }
+
+    private async Task HandleBooking()
+    {
+        // TODO: Save ticket booking to DB via AuthService or another service
+        Console.WriteLine($"Booked: {TicketModel.Name}, {TicketModel.Email}, {TicketModel.Quantity} tickets for {Event?.Title}");
+
+        // Optionally navigate back
+        NavigationManager.NavigateTo("/events");
+    }
+
+    public class TicketBookingModel
+    {
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public int Quantity { get; set; } = 1;
+    }
+}

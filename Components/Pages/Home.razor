@@ -1,0 +1,101 @@
+﻿@page "/"
+@using DemoApplication.Server.Data
+@using DemoApplication.Services.AuthServices
+@using Microsoft.AspNetCore.Authorization
+
+@inject IAuthService _roleManagerService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+<PageTitle>Home</PageTitle>
+
+<AuthorizeView Context="context">
+    <Authorized>
+        @if (context.User.IsInRole(AuthenticationInitalData.SuperAdminRole))
+        {
+            <MudContainer Class="mt-8 px-6">
+                <MudText Typo="Typo.h4" Class="mb-4">Welcome, @context.User.Identity?.Name!</MudText>
+
+                <MudGrid GutterSize="GutterSize.Small">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Class="dashboard-card d-flex flex-column align-items-start p-4">
+                            <MudIcon Icon="@Icons.Material.Filled.Event" Color="Color.Primary" Size="Size.Large" Class="mb-2" />
+                            <MudText Typo="Typo.subtitle1">Total Events</MudText>
+                            <MudText Typo="Typo.h5" Color="Color.Primary">1</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Class="dashboard-card d-flex flex-column align-items-start p-4">
+                            <MudIcon Icon="@Icons.Material.Filled.Group" Color="Color.Secondary" Size="Size.Large" Class="mb-2" />
+                            <MudText Typo="Typo.subtitle1">Registered Users</MudText>
+                            <MudText Typo="Typo.h5" Color="Color.Secondary">1</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudPaper Class="dashboard-card d-flex flex-column align-items-start p-4">
+                            <MudIcon Icon="@Icons.Material.Filled.ReportProblem" Color="Color.Error" Size="Size.Large" Class="mb-2" />
+                            <MudText Typo="Typo.subtitle1">Pending Reports</MudText>
+                            <MudText Typo="Typo.h5" Color="Color.Error">0</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="dashboard-card p-4" Style="height: 250px;">
+                            <MudIcon Icon="@Icons.Material.Filled.ShowChart" Color="Color.Info" Size="Size.Large" Class="mb-2" />
+                            <MudText Typo="Typo.subtitle1">Analytics Overview</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="dashboard-card p-4" Style="height: 250px;">
+                            <MudIcon Icon="@Icons.Material.Filled.Flag" Color="Color.Warning" Size="Size.Large" Class="mb-2" />
+                            <MudText Typo="Typo.subtitle1">Reported Events</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+
+            </MudContainer>
+        }
+        else if (context.User.IsInRole(AuthenticationInitalData.UserRole))
+        {
+            <MudContainer Class="mt-8 px-6">
+                <MudText Typo="Typo.h4" Class="mb-4">Welcome, @context.User.Identity?.Name!</MudText>
+
+                <MudGrid GutterSize="GutterSize.Small">
+                    <MudItem xs="12" sm="6">
+                        <MudPaper Class="dashboard-card">
+                            <MudText Typo="Typo.subtitle1">Upcoming Events</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudPaper Class="dashboard-card">
+                            <MudText Typo="Typo.subtitle1">My Bookings</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudPaper Class="dashboard-card" Style="height: 250px;">
+                            <MudText Typo="Typo.subtitle1">Suggestions for You</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudContainer>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                Sorry, you are logged in but do not have access to this system.
+            </MudAlert>
+        }
+    </Authorized>
+
+    <NotAuthorized>
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+            Access Denied. You are not authorized to view this page.
+            <MudLink Href="/Account/login">Click here to log in</MudLink>.
+        </MudAlert>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+

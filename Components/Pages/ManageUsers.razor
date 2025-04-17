@@ -1,0 +1,92 @@
+﻿@page "/usermanager"
+@using DemoApplication.Data
+@using DemoApplication.Server.Data
+@using DemoApplication.Server.Models
+@using DemoApplication.Services.AuthServices
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@attribute [Authorize(Roles = $"{AuthenticationInitalData.SuperAdminRole}")]
+@rendermode InteractiveServer
+@inject IAuthService _roleManagerService
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+
+<PageTitle>ManageUsers</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h5" GutterBottom="true">Manage Users</MudText>
+
+            <MudTextField @bind-Value="searchQuery" Placeholder="Search..." Variant="Variant.Outlined"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Class="mb-4" Immediate="true" />
+
+            @if (filteredAdmin == null)
+        {
+            <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+        }
+
+            else if (filteredAdmin.Count == 0)
+        {
+                <MudText>No User In the system</MudText>
+            }
+            else
+            {   <MudTable Items="filteredAdmin" Dense="true" Hover="true" Bordered="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh><b>Fullname</b></MudTh>
+                        <MudTh>Email</MudTh>
+                        <MudTh>Contact</MudTh>
+                        <MudTh>Role</MudTh>
+                        <MudTh>Registration Date</MudTh>
+                      
+                    </HeaderContent>
+                    <RowTemplate Context="admin">
+                        <MudTd DataLabel="Fullname">@admin.Name</MudTd>
+                        <MudTd DataLabel="Email">@admin.Email</MudTd>
+                        <MudTd DataLabel="Contact">@admin.Phone</MudTd>
+                        <MudTd DataLabel="Role">@admin.Role</MudTd>
+                        <MudTd DataLabel="Registration Date">@admin.createdOn.ToString()</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            
+                
+            }
+
+        </MudPaper>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private string searchQuery = "";
+    private List<Admin> filteredAdmin = new();
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await FetchAdmin();
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching Admin: {ex.Message}");
+        }
+
+
+    }
+
+    private async Task FetchAdmin()
+    {
+        try
+        {
+            filteredAdmin = await _roleManagerService.GetAllAdmin();
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching users: {ex.Message}");
+        }
+    }
+
+
+}

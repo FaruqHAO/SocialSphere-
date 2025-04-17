@@ -1,0 +1,126 @@
+﻿@page "/add-event"
+@using DemoApplication.Server.Data
+@using DemoApplication.Server.Models
+@using DemoApplication.Services.AuthServices
+@using Microsoft.AspNetCore.Authorization
+@inject NavigationManager Navigation
+
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = $"{AuthenticationInitalData.SuperAdminRole}")]
+@inject IAuthService _roleManagerService
+@inject ISnackbar SnackbarService
+
+<PageTitle>Add Event</PageTitle>
+
+<MudSnackbarProvider />
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Create New Event</h4>
+        </div>
+        <div class="card-body">
+            <EditForm Model="@eventModel" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <InputText class="form-control" @bind-Value="eventModel.Title" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <InputTextArea class="form-control" @bind-Value="eventModel.Description" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Image URL</label>
+                    <InputText class="form-control" @bind-Value="eventModel.ImageUrl" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Start Date and Time</label>
+                    <InputDate class="form-control" @bind-Value="eventModel.StartDateTime" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">End Date and Time</label>
+                    <InputDate class="form-control" @bind-Value="eventModel.EndDateTime" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Location</label>
+                    <InputText class="form-control" @bind-Value="eventModel.Location" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Google Maps URL</label>
+                    <InputText class="form-control" @bind-Value="eventModel.GoogleMapsUrl" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Capacity</label>
+                    <InputNumber class="form-control" @bind-Value="eventModel.Capacity" />
+                </div>
+                <button type="submit" class="btn btn-success" @disabled="isButtonDisabled">Save Event</button>
+
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private EventModel eventModel = new();
+    private bool isButtonDisabled = false;
+
+    void ChangePosition(string message, string position)
+    {
+        SnackbarService.Clear();
+        SnackbarService.Configuration.PositionClass = position;
+        SnackbarService.Add(message, Severity.Normal);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try{
+        
+
+        if (eventModel.StartDateTime.HasValue)
+            eventModel.StartDateTime = DateTime.SpecifyKind(eventModel.StartDateTime.Value, DateTimeKind.Utc);
+
+        if (eventModel.EndDateTime.HasValue)
+            eventModel.EndDateTime = DateTime.SpecifyKind(eventModel.EndDateTime.Value, DateTimeKind.Utc);
+
+        var result = await _roleManagerService.AddnewEvent(eventModel);
+        if (result)
+        {
+                isButtonDisabled = true;
+                SnackbarService.Add("✅ Event added successfully!", Severity.Success, config =>
+         {
+             config.ShowTransitionDuration = 500; // optional: tweak duration
+             config.HideTransitionDuration = 500;
+         });
+                // Delay for 1 minute (60,000 milliseconds)
+                await Task.Delay(6000);
+
+                Navigation.NavigateTo("/events");
+        }
+        else
+        {
+            SnackbarService.Add("❌ Failed to add event. Please try again.", Severity.Error, config =>
+            {
+                    config.ShowTransitionDuration = 500; // optional: tweak duration
+                    config.HideTransitionDuration = 500;
+            });
+        }
+    }
+
+    catch (Exception ex)
+    {
+        SnackbarService.Add($"❌ Error: {ex.Message}", Severity.Error, config => {
+                config.ShowTransitionDuration = 500; // optional: tweak duration
+                config.HideTransitionDuration = 500;
+        });
+    }
+    }
+}

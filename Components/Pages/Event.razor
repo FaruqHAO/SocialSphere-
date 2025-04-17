@@ -1,0 +1,139 @@
+﻿@page "/events"
+@using DemoApplication.Server.Data
+@using DemoApplication.Server.Models
+@using DemoApplication.Services.AuthServices
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+@inject IAuthService _authManagerService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IDialogService DialogService
+@attribute [Authorize(Roles = $"{AuthenticationInitalData.SuperAdminRole},{AuthenticationInitalData.UserRole}")]
+
+@rendermode InteractiveServer
+<PageTitle>Event</PageTitle>
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Event List</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+             @if (IsSuperAdmin)
+                        {
+            <MudNavLink Href="/add-event" Style="display:inline-block">
+                <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Default" />
+                </MudNavLink>
+            }
+            else
+            {
+                
+            }
+
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (EventList == null)
+        {
+            <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+        }
+
+        else if (EventList.Count == 0)
+        {
+            <MudText>No events available</MudText>
+        }
+        else
+        {
+            <MudTable Items="EventList" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
+                <HeaderContent>
+                    <MudTh>#</MudTh>
+                    <MudTh>Title</MudTh>
+                    <MudTh>Description</MudTh>
+                    <MudTh>Location</MudTh>
+                    <MudTh>Action</MudTh>
+                </HeaderContent>
+                <RowTemplate >
+                    <MudTd DataLabel="#">@(++_rowNumber)</MudTd>
+                    <MudTd DataLabel="Event Name">@context.Title</MudTd>
+                    <MudTd DataLabel="Date">@context.Description</MudTd>
+                    <MudTd DataLabel="Location">@context.Location</MudTd>
+                    <MudTd DataLabel="Actions">
+
+                        @if (IsSuperAdmin)
+                        {
+                            <MudButton Color="Color.Primary">Edit</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Error">Delete</MudButton>
+
+
+                        }
+                        else
+                        {
+                            <MudButton Color="Color.Secondary" OnClick="@(() => NavigateToBooking(context.Id))">
+                                Book Ticket
+                            </MudButton>
+
+                        }
+                                
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+           }
+    </MudCardContent>
+   @*  <MudCardActions>
+        <MudButton Variant="Variant.Text" Color="Color.Primary">Read More</MudButton>
+    </MudCardActions> *@
+</MudCard>
+
+
+
+@code {
+    private int _rowNumber = 0;
+    private List<EventModel> EventList;
+    private bool _hidePosition;
+    private bool _loading;
+    void NavigateToBooking(int eventId)
+    {
+        NavigationManager.NavigateTo($"/book-ticket/{eventId}");
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            await FetchLibraryFiles();
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching libraryItems: {ex.Message}");
+        }
+
+
+    }
+    private async Task FetchLibraryFiles()
+    {
+        try
+        {
+            EventList = await _authManagerService.GetEvent();
+           // var r = 1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching users: {ex.Message}");
+        }
+    }
+
+
+    private ClaimsPrincipal _currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _currentUser = authState.User;
+    }
+
+    private bool IsSuperAdmin => _currentUser?.IsInRole(AuthenticationInitalData.SuperAdminRole) ?? false;
+
+
+  
+}

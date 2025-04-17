@@ -1,0 +1,115 @@
+﻿@page "/rolesmanager"
+@attribute [Authorize(Roles = $"{AuthenticationInitalData.SuperAdminRole}")]
+@rendermode InteractiveServer
+
+
+@using DemoApplication.Server.Data
+@using DemoApplication.Server.Models
+@using DemoApplication.Services.AuthServices
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@using System.Text
+@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@inject IAuthService _roleManagerService
+
+<PageTitle>Manage Roles</PageTitle>
+
+<MudPaper Class="p-6">
+    <MudText Typo="Typo.h4" GutterBottom="true">Role Manager Page</MudText>
+    <MudText Typo="Typo.body1">You can manage user roles from this page.</MudText>
+
+    @if (users == null || PageLoading)
+    {
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    }
+    else
+    {
+        <MudTable Items="users" Elevation="1" Dense="true" Bordered="true" Striped="true">
+            <HeaderContent>
+                <MudTh>User Name</MudTh>
+                <MudTh class="text-center">Roles</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+
+            <RowTemplate Context="user">
+                <MudTd>@user.UserName</MudTd>
+
+                @if (user.RoleName == AuthenticationInitalData.SuperAdminRole)
+                {
+                    <MudTd>
+                        <MudText Class="text-center text-primary" Typo="Typo.subtitle2">
+                            <b>@AuthenticationInitalData.SuperAdminRole</b>
+                        </MudText>
+                    </MudTd>
+                    <MudTd></MudTd>
+                }
+                else
+                {
+                    <MudTd>
+                        <MudSelect T="string" @bind-Value="user.RoleName" Label="Role" Dense="true" Style="min-width: 150px;">
+                            <MudSelectItem Value="@string.Empty">No Role</MudSelectItem>
+                            @foreach (var role in AuthenticationInitalData.AppRoles.Where(r => r.Name != AuthenticationInitalData.SuperAdminRole))
+                            {
+                                <MudSelectItem Value="@role">@role</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+
+                    <MudTd>
+                        @if (user.Saving)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Info">Saving...</MudText>
+                        }
+                        else
+                        {
+                            <MudButton Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled" OnClick="() => SaveChanges(user)">
+                                Save
+                            </MudButton>
+
+                            @if (user.Saved)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Success">Saved</MudText>
+                            }
+
+                            @if (user.Error)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Error">Error</MudText>
+                            }
+                        }
+                    </MudTd>
+                }
+            </RowTemplate>
+        </MudTable>
+    }
+</MudPaper>
+
+@code {
+    List<UserWithRoles> users;
+    private bool PageLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        PageLoading = true;
+        await Task.Delay(100);
+        users = await _roleManagerService.GetUsersWithRolesAsync();
+        PageLoading = false;
+    }
+
+    private async Task SaveChanges(UserWithRoles user)
+    {
+        user.Saved = false;
+        user.Error = false;
+        user.Saving = true;
+
+        await Task.Delay(100);
+        var result = await _roleManagerService.SaveUserRoles(user);
+
+        user.Saved = result;
+        user.Error = !result;
+        user.Saving = false;
+
+        StateHasChanged();
+    }
+}
