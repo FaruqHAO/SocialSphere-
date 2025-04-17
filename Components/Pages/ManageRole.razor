@@ -33,6 +33,7 @@ else
     <table class="table">
         <thead>
             <tr>
+                <th>#</th>
                 <th>User name</th>
                 <th class="text-center">Roles</th>
                 <th>
@@ -40,9 +41,10 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var user in users)
+            @foreach (var (user, index) in users.Select((user, i) => (user, i + 1)))
             {
                 <tr>
+                    <td>@index</td>
                     <td>@user.UserName</td>
                     @if (user.RoleName == AuthenticationInitalData.SuperAdminRole)
                     {
