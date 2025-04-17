@@ -91,10 +91,23 @@
 
     protected override async Task OnInitializedAsync()
     {
-        PageLoading = true;
-        await Task.Delay(100);
-        users = await _roleManagerService.GetUsersWithRolesAsync();
-        PageLoading = false;
+        try
+        {
+            PageLoading = true;
+            await Task.Delay(100);
+            users = await _roleManagerService.GetUsersWithRolesAsync() ?? new List<UserWithRoles>();
+            PageLoading = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading users: " + ex.Message);
+            // Optional: Show user-friendly message
+        }
+        finally
+        {
+            PageLoading = false;
+        }
+
     }
 
     private async Task SaveChanges(UserWithRoles user)
